@@ -32,32 +32,6 @@ pub struct Board([Option<Piece>; 64]);
 
 impl Board {
     pub fn new() -> Board {
-        let empty: Option<Piece> = None;
-        let mut board = [empty; 64];
-        for i in 8..16 {
-            board[i] = Some((Soldier::Pawn, Color::White));
-            board[i + 40] = Some((Soldier::Pawn, Color::Black));
-        }
-        board[0] = Some((Soldier::Rook, Color::White));
-        board[1] = Some((Soldier::Knight, Color::White));
-        board[2] = Some((Soldier::Bishop, Color::White));
-        board[3] = Some((Soldier::Queen, Color::White));
-        board[4] = Some((Soldier::King, Color::White));
-        board[5] = Some((Soldier::Bishop, Color::White));
-        board[6] = Some((Soldier::Knight, Color::White));
-        board[7] = Some((Soldier::Rook, Color::White));
-        board[56] = Some((Soldier::Rook, Color::Black));
-        board[57] = Some((Soldier::Knight, Color::Black));
-        board[58] = Some((Soldier::Bishop, Color::Black));
-        board[59] = Some((Soldier::Queen, Color::Black));
-        board[60] = Some((Soldier::King, Color::Black));
-        board[61] = Some((Soldier::Bishop, Color::Black));
-        board[62] = Some((Soldier::Knight, Color::Black));
-        board[63] = Some((Soldier::Rook, Color::Black));
-        Board(board)
-    }
-
-    pub fn empty() -> Board {
         Board([None; 64])
     }
 

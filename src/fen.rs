@@ -5,16 +5,16 @@ use crate::{
 
 impl State {
     pub fn from_fen(fen: &str) -> Self {
-        let mut split_fen: Vec<&str> = fen.split(' ').collect();
-        let board = get_board(split_fen.remove(0));
-        let turn = get_active_color(split_fen.remove(0));
+        let mut split_fen = fen.split(' ');
+        let board = get_board(split_fen.next().unwrap());
+        let turn = get_active_color(split_fen.next().unwrap());
         let (
             white_castle_kingside,
             white_castle_queenside,
             black_castle_kingside,
             black_castle_queenside,
-        ) = castling_rights(split_fen.remove(0));
-        let en_passant_square = get_en_passant_square(split_fen.remove(0));
+        ) = castling_rights(split_fen.next().unwrap());
+        let en_passant_square = get_en_passant_square(split_fen.next().unwrap());
 
         State {
             board,
@@ -29,7 +29,7 @@ impl State {
 }
 
 fn get_board(piece_field: &str) -> Board {
-    let mut board = Board::empty();
+    let mut board = Board::new();
     let mut row = 7;
     let mut col = 0;
     for c in piece_field.chars() {
