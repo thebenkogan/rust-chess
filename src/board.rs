@@ -57,6 +57,10 @@ impl Board {
         Board(board)
     }
 
+    pub fn empty() -> Board {
+        Board([None; 64])
+    }
+
     // write a function 'iter' that gives back an iterator over references of the board pieces
     pub fn iter(&self) -> Iter<Option<Piece>> {
         self.0.iter()
