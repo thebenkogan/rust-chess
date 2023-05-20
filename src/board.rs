@@ -16,8 +16,18 @@ pub enum Color {
     Black,
 }
 
+impl Color {
+    pub fn opposite(&self) -> Color {
+        match self {
+            Color::White => Color::Black,
+            Color::Black => Color::White,
+        }
+    }
+}
+
 pub type Piece = (Soldier, Color);
 
+#[derive(Clone)]
 pub struct Board([Option<Piece>; 64]);
 
 impl Board {
@@ -56,6 +66,10 @@ impl Board {
         &self.0[x + y * 8]
     }
 
+    pub fn set(&mut self, x: usize, y: usize, piece: Option<Piece>) {
+        self.0[x + y * 8] = piece;
+    }
+
     pub fn is_same_color(&self, (x1, y1): (i32, i32), (x2, y2): (i32, i32)) -> bool {
         match (
             self.get(x1 as usize, y1 as usize),
@@ -76,18 +90,28 @@ impl Board {
         }
     }
 
-    pub fn is_same_piece(&self, (x1, y1): (i32, i32), (x2, y2): (i32, i32)) -> bool {
-        match (
-            self.get(x1 as usize, y1 as usize),
-            self.get(x2 as usize, y2 as usize),
-        ) {
-            (Some((s1, _)), Some((s2, _))) => s1 == s2,
-            _ => false,
+    pub fn remove_king(&mut self, color: Color) -> (usize, usize) {
+        for i in 0..64 {
+            if let Some((Soldier::King, c)) = self.0[i] {
+                if c == color {
+                    self.0[i] = None;
+                    return (i % 8, i / 8);
+                }
+            }
         }
+        unreachable!("King not on board")
     }
 
-    pub fn is_queen(&self, (x, y): (i32, i32)) -> bool {
-        matches!(self.get(x as usize, y as usize), Some((Soldier::Queen, _)))
+    pub fn is_sliding_piece(p: &Option<Piece>) -> bool {
+        matches!(
+            p,
+            Some((Soldier::Bishop, _)) | Some((Soldier::Rook, _)) | Some((Soldier::Queen, _))
+        )
+    }
+
+    pub fn is_aligned((x1, y1): (usize, usize), (x2, y2): (usize, usize)) -> bool {
+        let (x1, y1, x2, y2) = (x1 as i32, y1 as i32, x2 as i32, y2 as i32);
+        x1 == x2 || y1 == y2 || (x1 - x2).abs() == (y1 - y2).abs()
     }
 }
 
