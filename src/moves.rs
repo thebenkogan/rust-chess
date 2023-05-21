@@ -82,8 +82,8 @@ pub fn legal_moves(st: &State) -> Vec<Move> {
             .intersection(&pin_lines_from_king.moves);
 
         if pinned.num_set() == 1 {
-            pinned_mask[pinned.lowest_set()] = line.intersection(&mr.moves);
-            // TODO: handle the enpassant case where num_set == 2
+            pinned_mask[pinned.lowest_set()] = line;
+            // TODO: handle the enpassant case
         }
     }
 
@@ -98,6 +98,13 @@ pub fn legal_moves(st: &State) -> Vec<Move> {
         .filter_map(|(i, mr)| {
             if let Some(mr) = mr {
                 let pos = (i as i32 % 8, i as i32 / 8);
+                if pos == (kx as i32, ky as i32) {
+                    // we already found king moves
+                    return Some(Move::from_bitboard(
+                        (kx as i32, ky as i32),
+                        king_moves.moves,
+                    ));
+                }
                 let legal_moves = mr
                     .moves
                     .intersection(&checker_mask)

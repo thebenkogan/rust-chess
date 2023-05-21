@@ -1,4 +1,4 @@
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct BitBoard(u64);
 
 impl BitBoard {
@@ -29,6 +29,7 @@ impl BitBoard {
     // creates a bitboard with a line from (x1, y1) to but not including (x2, y2)
     pub fn make_line((x1, y1): (usize, usize), (x2, y2): (usize, usize)) -> BitBoard {
         let mut line = BitBoard::new_empty();
+        line.set(x1, y1);
         let dx = (x2 as i32 - x1 as i32).signum();
         let dy = (y2 as i32 - y1 as i32).signum();
         let mut x = x1 as i32 + dx;
