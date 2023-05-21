@@ -1,3 +1,5 @@
+use serde::Deserialize;
+
 use crate::{
     bitboard::BitBoard,
     board::{Board, Color, Soldier},
@@ -6,7 +8,7 @@ use crate::{
 
 type Position = (i32, i32);
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Move {
     pub from: Position,
     pub to: Position,

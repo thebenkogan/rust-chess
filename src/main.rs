@@ -7,6 +7,7 @@ mod board;
 mod fen;
 mod moves;
 mod state;
+mod test;
 
 fn main() {
     let init = State::from_fen("4k3/1p4pp/2p5/8/q3r2Q/3p3P/1P4PK/4R3 b - -");
