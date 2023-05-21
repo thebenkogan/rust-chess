@@ -1,3 +1,5 @@
+use std::cmp::{max, min};
+
 use serde::Deserialize;
 
 use crate::{
@@ -93,7 +95,14 @@ pub fn legal_moves(st: &State) -> Vec<Move> {
 
         if pinned.num_set() == 1 {
             pinned_mask[pinned.lowest_set()] = line;
-            // TODO: handle the enpassant case
+        }
+    }
+    if let Some((ex, ey)) = st.en_passant_square {
+        let dy = if st.turn == Color::White { -1 } else { 1 };
+        if is_enpassant_pin_rank(&st.board, st.turn, ey as i32 + dy) {
+            let col = ((ey as i32 + dy) * 8) as usize;
+            pinned_mask[col + ex + 1].unset(ex, ey);
+            pinned_mask[col + ex - 1].unset(ex, ey);
         }
     }
 
@@ -152,6 +161,48 @@ fn get_checker_mask(bd: &Board, (cx, cy): (usize, usize), king_pos: (usize, usiz
         Soldier::Bishop | Soldier::Rook | Soldier::Queen => BitBoard::make_line((cx, cy), king_pos),
         _ => unreachable!(),
     }
+}
+
+fn is_enpassant_pin_rank(bd: &Board, side: Color, rank: i32) -> bool {
+    // enpassant pins are the case where an enpassant capture could leave our king in check
+    // the rank containing the enpassantable pawn should look like:
+    // [enemy slider ... pawn pawn ... king] or [king ... pawn pawn ... enemy slider]
+
+    let mut soldiers = Vec::new();
+    let mut king_file = None;
+    for file in 0..=7 {
+        if let Some(p) = bd.get(file, rank as usize) {
+            match p {
+                (Soldier::Rook, c) | (Soldier::Queen, c) => {
+                    if *c != side {
+                        soldiers.push(Soldier::Rook)
+                    } else {
+                        soldiers.push(Soldier::Queen)
+                    }
+                }
+                (s, c) => {
+                    if *c == side && matches!(s, Soldier::King) {
+                        king_file = Some(soldiers.len())
+                    }
+                    soldiers.push(*s)
+                }
+            }
+        }
+    }
+    if king_file.is_none() {
+        return false;
+    }
+    let king_file = king_file.unwrap();
+
+    let high_soldiers = &soldiers[king_file..=min(king_file + 3, soldiers.len() - 1)];
+    let low_soldiers = &soldiers[max(king_file - 3, 0)..=king_file];
+    matches!(
+        high_soldiers,
+        [Soldier::King, Soldier::Pawn, Soldier::Pawn, Soldier::Rook]
+    ) || matches!(
+        low_soldiers,
+        [Soldier::Rook, Soldier::Pawn, Soldier::Pawn, Soldier::King]
+    )
 }
 
 fn sliding_piece_directions(s: &Soldier) -> Vec<(i32, i32)> {

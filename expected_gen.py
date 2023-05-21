@@ -1,7 +1,7 @@
 import chess
 import json
 
-FEN = "8/8/8/2k5/3Pp3/8/8/4K3 b - d3 0 1"
+FEN = "8/6bb/8/8/RRpP2kr/4P3/P7/K7 b - d3 0 1"
 
 test_positions = json.loads(open("test-data/positions.json").read())
 

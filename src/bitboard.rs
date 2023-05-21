@@ -14,6 +14,10 @@ impl BitBoard {
         self.0 |= 1 << (x + y * 8);
     }
 
+    pub fn unset(&mut self, x: usize, y: usize) {
+        self.0 &= !(1 << (x + y * 8));
+    }
+
     pub fn get(&self, x: usize, y: usize) -> bool {
         self.0 & (1 << (x + y * 8)) != 0
     }
