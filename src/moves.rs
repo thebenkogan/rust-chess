@@ -153,10 +153,13 @@ pub fn legal_moves(st: &State) -> Vec<Move> {
                 }
                 let mut checker_mask = checker_mask;
                 if let Some((ex, ey)) = st.en_passant_square {
-                    if num_checkers > 0 && matches!(s, Soldier::Pawn) {
-                        // if we are in check from a pawn that we can
-                        // enpassant, allow the enpassant square as a legal move
-                        checker_mask.set(ex, ey);
+                    if let Some((cx, cy)) = checker_pos {
+                        let (cs, _) = st.board.get(cx, cy).unwrap();
+                        if matches!(cs, Soldier::Pawn) && matches!(s, Soldier::Pawn) {
+                            // if we are in check from a pawn that we can
+                            // enpassant, allow the enpassant square as a legal move
+                            checker_mask.set(ex, ey);
+                        }
                     }
                 }
                 let legal_moves = mr
