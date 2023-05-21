@@ -1,4 +1,5 @@
-use moves::legal_moves;
+use board::Soldier;
+use moves::{legal_moves, Move};
 
 use crate::state::State;
 
@@ -10,7 +11,26 @@ mod state;
 mod test;
 
 fn main() {
-    let init = State::from_fen("4k3/1p4pp/2p5/8/q3r2Q/3p3P/1P4PK/4R3 b - -");
-    let legal_moves = legal_moves(&init);
-    println!("{:?}", legal_moves);
+    let init = State::from_fen("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8");
+    let st = State::step(
+        init,
+        Move {
+            from: (3, 6),
+            to: (2, 7),
+            promotion: Some(Soldier::Bishop),
+        },
+    );
+    let st2 = State::step(
+        st,
+        Move {
+            from: (3, 7),
+            to: (3, 0),
+            promotion: None,
+        },
+    );
+    println!("{}", st2.board);
+    let legal_moves = legal_moves(&st2);
+    for mv in legal_moves {
+        println!("{:?}", mv);
+    }
 }

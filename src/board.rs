@@ -50,6 +50,12 @@ impl Board {
         self.0[x + y * 8] = piece;
     }
 
+    pub fn remove(&mut self, x: usize, y: usize) -> Option<Piece> {
+        let piece = self.0[x + y * 8];
+        self.set(x, y, None);
+        piece
+    }
+
     pub fn is_same_color(&self, (x1, y1): (i32, i32), (x2, y2): (i32, i32)) -> bool {
         match (
             self.get(x1 as usize, y1 as usize),

@@ -72,9 +72,9 @@ pub fn legal_moves(st: &State) -> Vec<Move> {
             let (px, py) = (i % 8, i / 8);
             let (s, _) = opp_board.get(px, py).unwrap();
             let attacks = if matches!(s, Soldier::Pawn) {
-                mr.captures // only care about diagonal pawn attacks
+                mr.attacks // only care about diagonal pawn attacks
             } else {
-                mr.moves
+                mr.moves.union(&mr.attacks)
             };
             if attacks.get(kx, ky) {
                 num_checkers += 1;
@@ -223,7 +223,7 @@ fn is_enpassant_pin_rank(bd: &Board, side: Color, rank: i32) -> bool {
     let king_file = king_file.unwrap();
 
     let high_soldiers = &soldiers[king_file..=min(king_file + 3, soldiers.len() - 1)];
-    let low_soldiers = &soldiers[max(king_file - 3, 0)..=king_file];
+    let low_soldiers = &soldiers[max(king_file as i32 - 3, 0) as usize..=king_file];
     matches!(
         high_soldiers,
         [Soldier::King, Soldier::Pawn, Soldier::Pawn, Soldier::Rook]
@@ -255,10 +255,9 @@ fn in_bounds((x, y): Position) -> bool {
     (0..8).contains(&x) && (0..8).contains(&y)
 }
 
-// the only reason we need this is because enpassant doesn't move to the square it captured
 struct MovesResult {
     moves: BitBoard,
-    captures: BitBoard,
+    attacks: BitBoard, // squares attacked (same-color capture, diagonal pawn, etc.)
 }
 
 fn pseudo_legal_moves(
@@ -295,16 +294,16 @@ fn pseudo_legal_moves(
 }
 
 fn sliding_moves(bd: &Board, (px, py): Position, soldier: Soldier, side: Color) -> MovesResult {
-    let mut captures = BitBoard::new_empty();
+    let mut attacks = BitBoard::new_empty();
     let mut moves = BitBoard::new_empty();
     let dirs = sliding_piece_directions(&soldier);
     for (dx, dy) in dirs {
         let (mut x, mut y) = (px + dx, py + dy);
         while in_bounds((x, y)) {
+            attacks.set(x as usize, y as usize);
             match bd.get(x as usize, y as usize) {
                 Some((_, c)) if c == &side => break,
                 Some(_) => {
-                    captures.set(x as usize, y as usize);
                     moves.set(x as usize, y as usize);
                     break;
                 }
@@ -314,11 +313,11 @@ fn sliding_moves(bd: &Board, (px, py): Position, soldier: Soldier, side: Color) 
             y += dy;
         }
     }
-    MovesResult { captures, moves }
+    MovesResult { attacks, moves }
 }
 
 fn knight_moves(bd: &Board, (px, py): Position) -> MovesResult {
-    let mut captures = BitBoard::new_empty();
+    let mut attacks = BitBoard::new_empty();
     let mut moves = BitBoard::new_empty();
     vec![
         (2, 1),
@@ -333,14 +332,14 @@ fn knight_moves(bd: &Board, (px, py): Position) -> MovesResult {
     .iter()
     .for_each(|(dx, dy)| {
         let (nx, ny) = (px + dx, py + dy);
-        if in_bounds((nx, ny)) && !bd.is_same_color((px, py), (nx, ny)) {
-            moves.set(nx as usize, ny as usize);
-            if bd.is_enemy_color((px, py), (nx, ny)) {
-                captures.set(nx as usize, ny as usize);
+        if in_bounds((nx, ny)) {
+            attacks.set(nx as usize, ny as usize);
+            if !bd.is_same_color((px, py), (nx, ny)) {
+                moves.set(nx as usize, ny as usize);
             }
         }
     });
-    MovesResult { captures, moves }
+    MovesResult { attacks, moves }
 }
 
 fn pawn_moves(
@@ -349,7 +348,7 @@ fn pawn_moves(
     side: Color,
     enpassant_square: Option<(usize, usize)>,
 ) -> MovesResult {
-    let mut captures = BitBoard::new_empty();
+    let mut attacks = BitBoard::new_empty();
     let mut moves = BitBoard::new_empty();
     let dy = if side == Color::White { 1 } else { -1 };
     let is_start = if side == Color::White {
@@ -366,7 +365,7 @@ fn pawn_moves(
     for dx in [-1, 1].iter() {
         let (nx, ny) = (px + dx, py + dy);
         if in_bounds((nx, ny)) {
-            captures.set(nx as usize, ny as usize); // label diagonal as a capture so it is picked up as attacked
+            attacks.set(nx as usize, ny as usize); // label diagonal as a capture so it is picked up as attacked
             if bd.is_enemy_color((px, py), (nx, ny)) {
                 moves.set(nx as usize, ny as usize);
             }
@@ -374,11 +373,11 @@ fn pawn_moves(
         if let Some((ex, ey)) = enpassant_square {
             if (nx, ny) == (ex as i32, ey as i32) {
                 moves.set(nx as usize, ny as usize);
-                captures.set((px + dx) as usize, py as usize);
+                attacks.set((px + dx) as usize, py as usize);
             }
         }
     }
-    MovesResult { captures, moves }
+    MovesResult { attacks, moves }
 }
 
 fn king_moves(
@@ -389,7 +388,7 @@ fn king_moves(
     kingside_rights: bool,
     queenside_rights: bool,
 ) -> MovesResult {
-    let mut captures = BitBoard::new_empty();
+    let mut attacks = BitBoard::new_empty();
     let mut moves = BitBoard::new_empty();
     vec![
         (1, 1),
@@ -404,13 +403,10 @@ fn king_moves(
     .iter()
     .for_each(|(dx, dy)| {
         let (nx, ny) = (px + dx, py + dy);
-        if in_bounds((nx, ny))
-            && !bd.is_same_color((px, py), (nx, ny))
-            && !attacked.get(nx as usize, ny as usize)
-        {
-            moves.set(nx as usize, ny as usize);
-            if bd.is_enemy_color((px, py), (nx, ny)) {
-                captures.set(nx as usize, ny as usize);
+        if in_bounds((nx, ny)) {
+            attacks.set(nx as usize, ny as usize);
+            if !bd.is_same_color((px, py), (nx, ny)) && !attacked.get(nx as usize, ny as usize) {
+                moves.set(nx as usize, ny as usize);
             }
         }
     });
@@ -436,5 +432,5 @@ fn king_moves(
         }
     }
 
-    MovesResult { captures, moves }
+    MovesResult { attacks, moves }
 }
