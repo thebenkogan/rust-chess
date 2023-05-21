@@ -86,7 +86,15 @@ pub fn legal_moves(st: &State) -> Vec<Move> {
 
     // get our king moves based on the attacked squares, return if double check
     // if single check, create checker mask representing only legal squares in position
-    let king_moves = king_moves(&st.board, (kx as i32, ky as i32), attacked_squares);
+    let (kingside_rights, queenside_rights) = st.castling_rights_for_color();
+    let king_moves = king_moves(
+        &st.board,
+        (kx as i32, ky as i32),
+        attacked_squares,
+        num_checkers > 0,
+        kingside_rights,
+        queenside_rights,
+    );
     if num_checkers > 1 {
         return Move::from_bitboard(Soldier::King, (kx as i32, ky as i32), king_moves.moves);
     }
@@ -272,7 +280,15 @@ fn pseudo_legal_moves(
             Soldier::Bishop | Soldier::Rook | Soldier::Queen => {
                 move_sets.push(Some(sliding_moves(bd, pos, soldier, side)))
             }
-            Soldier::King => move_sets.push(Some(king_moves(bd, pos, BitBoard::new_empty()))),
+            // don't worry about castling here, it happens in legal move generation
+            Soldier::King => move_sets.push(Some(king_moves(
+                bd,
+                pos,
+                BitBoard::new_empty(),
+                true,
+                false,
+                false,
+            ))),
         }
     }
     move_sets
@@ -365,7 +381,14 @@ fn pawn_moves(
     MovesResult { captures, moves }
 }
 
-fn king_moves(bd: &Board, (px, py): Position, attacked: BitBoard) -> MovesResult {
+fn king_moves(
+    bd: &Board,
+    (px, py): Position,
+    attacked: BitBoard,
+    king_in_check: bool,
+    kingside_rights: bool,
+    queenside_rights: bool,
+) -> MovesResult {
     let mut captures = BitBoard::new_empty();
     let mut moves = BitBoard::new_empty();
     vec![
@@ -391,5 +414,27 @@ fn king_moves(bd: &Board, (px, py): Position, attacked: BitBoard) -> MovesResult
             }
         }
     });
+
+    if !king_in_check {
+        let (px, py) = (px as usize, py as usize);
+        if kingside_rights
+            && bd.get(px + 1, py).is_none()
+            && bd.get(px + 2, py).is_none()
+            && !attacked.get(px + 1, py)
+            && !attacked.get(px + 2, py)
+        {
+            moves.set(px + 2, py);
+        }
+        if queenside_rights
+            && bd.get(px - 1, py).is_none()
+            && bd.get(px - 2, py).is_none()
+            && bd.get(px - 3, py).is_none()
+            && !attacked.get(px - 1, py)
+            && !attacked.get(px - 2, py)
+        {
+            moves.set(px - 2, py);
+        }
+    }
+
     MovesResult { captures, moves }
 }
