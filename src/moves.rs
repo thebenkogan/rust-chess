@@ -14,20 +14,43 @@ type Position = (i32, i32);
 pub struct Move {
     pub from: Position,
     pub to: Position,
+    pub promotion: Option<Soldier>,
 }
 
 impl Move {
-    fn from_bitboard(from: Position, to: BitBoard) -> Vec<Self> {
+    fn from_bitboard(s: Soldier, from: Position, to: BitBoard) -> Vec<Self> {
         let mut moves = Vec::new();
         for x in 0..8 {
             for y in 0..8 {
                 if to.get(x, y) {
-                    moves.push(Self {
-                        from,
-                        to: (x as i32, y as i32),
-                    });
+                    if matches!(s, Soldier::Pawn) && (y == 0 || y == 7) {
+                        moves.append(&mut Self::promotion_moves(from, (x as i32, y as i32)));
+                    } else {
+                        moves.push(Self {
+                            from,
+                            to: (x as i32, y as i32),
+                            promotion: None,
+                        });
+                    }
                 }
             }
+        }
+        moves
+    }
+
+    fn promotion_moves(from: Position, to: Position) -> Vec<Move> {
+        let mut moves = Vec::new();
+        for s in &[
+            Soldier::Queen,
+            Soldier::Rook,
+            Soldier::Bishop,
+            Soldier::Knight,
+        ] {
+            moves.push(Self {
+                from,
+                to,
+                promotion: Some(*s),
+            });
         }
         moves
     }
@@ -49,7 +72,7 @@ pub fn legal_moves(st: &State) -> Vec<Move> {
             let (px, py) = (i % 8, i / 8);
             let (s, _) = opp_board.get(px, py).unwrap();
             let attacks = if matches!(s, Soldier::Pawn) {
-                mr.captures
+                mr.captures // only care about diagonal pawn attacks
             } else {
                 mr.moves
             };
@@ -57,7 +80,6 @@ pub fn legal_moves(st: &State) -> Vec<Move> {
                 num_checkers += 1;
                 checker_pos = Some((i % 8, i / 8));
             }
-            // union captures to include pawn diagonal attacks
             attacked_squares = attacked_squares.union(&attacks);
         }
     });
@@ -66,7 +88,7 @@ pub fn legal_moves(st: &State) -> Vec<Move> {
     // if single check, create checker mask representing only legal squares in position
     let king_moves = king_moves(&st.board, (kx as i32, ky as i32), attacked_squares);
     if num_checkers > 1 {
-        return Move::from_bitboard((kx as i32, ky as i32), king_moves.moves);
+        return Move::from_bitboard(Soldier::King, (kx as i32, ky as i32), king_moves.moves);
     }
     let checker_mask = if num_checkers == 1 {
         get_checker_mask(&st.board, checker_pos.unwrap(), (kx, ky))
@@ -106,9 +128,6 @@ pub fn legal_moves(st: &State) -> Vec<Move> {
         }
     }
 
-    // question: what about the enpassant case?
-    // scan the row in question and see if it applies, remove enpassant square if true
-
     pseudo_legal_moves(&st.board, st.turn, st.en_passant_square)
         .iter()
         .enumerate()
@@ -119,6 +138,7 @@ pub fn legal_moves(st: &State) -> Vec<Move> {
                 if pos == (kx as i32, ky as i32) {
                     // we already found king moves
                     return Some(Move::from_bitboard(
+                        s,
                         (kx as i32, ky as i32),
                         king_moves.moves,
                     ));
@@ -135,7 +155,7 @@ pub fn legal_moves(st: &State) -> Vec<Move> {
                     .moves
                     .intersection(&checker_mask)
                     .intersection(&pinned_mask[i]);
-                Some(Move::from_bitboard(pos, legal_moves))
+                Some(Move::from_bitboard(s, pos, legal_moves))
             } else {
                 None
             }

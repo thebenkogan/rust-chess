@@ -1,6 +1,8 @@
 use std::{fmt::Display, slice::Iter};
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+use serde::Deserialize;
+
+#[derive(Copy, Clone, Debug, PartialEq, Deserialize, Eq, PartialOrd, Ord)]
 pub enum Soldier {
     Pawn,
     Knight,
