@@ -41,7 +41,6 @@ fn get_board(piece_field: &str) -> Board {
 
         if c.is_ascii_digit() {
             col += c.to_digit(10).unwrap() as usize;
-            continue;
         } else {
             let piece = char_to_piece(c);
             board.set(col, row, Some(piece));

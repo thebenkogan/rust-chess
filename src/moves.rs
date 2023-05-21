@@ -36,7 +36,7 @@ pub fn legal_moves(st: &State) -> Vec<Move> {
     let opp_turn = st.turn.opposite();
     let mut opp_board = st.board.clone();
     let (kx, ky) = opp_board.remove_king(st.turn);
-    let opp_moves = pseudo_legal_moves(&opp_board, opp_turn);
+    let opp_moves = pseudo_legal_moves(&opp_board, opp_turn, None);
 
     // figure out the number of checkers, their position, and the attacked squares bitboard
     let mut checker_pos = None;
@@ -48,7 +48,8 @@ pub fn legal_moves(st: &State) -> Vec<Move> {
                 num_checkers += 1;
                 checker_pos = Some((i % 8, i / 8));
             }
-            attacked_squares = attacked_squares.union(&mr.moves);
+            // union captures to include pawn diagonal attacks
+            attacked_squares = attacked_squares.union(&mr.moves.union(&mr.captures));
         }
     });
 
@@ -90,11 +91,9 @@ pub fn legal_moves(st: &State) -> Vec<Move> {
     }
 
     // question: what about the enpassant case?
-    // if the state told us which pawn is legal for enpassant via bitboard
-    // we could check the case of two blockers, see if the intersection contains
-    // the enpassantable pawn, then disallow it if this is a horizontal pin
+    // scan the row in question and see if it applies, remove enpassant square if true
 
-    pseudo_legal_moves(&st.board, st.turn)
+    pseudo_legal_moves(&st.board, st.turn, st.en_passant_square)
         .iter()
         .enumerate()
         .filter_map(|(i, mr)| {
@@ -167,7 +166,11 @@ struct MovesResult {
     captures: BitBoard,
 }
 
-fn pseudo_legal_moves(bd: &Board, side: Color) -> Vec<Option<MovesResult>> {
+fn pseudo_legal_moves(
+    bd: &Board,
+    side: Color,
+    enpassant_square: Option<(usize, usize)>,
+) -> Vec<Option<MovesResult>> {
     let mut move_sets: Vec<Option<MovesResult>> = Vec::new();
     for (i, &square) in bd.iter().enumerate() {
         let pos = (i as i32 % 8, i as i32 / 8);
@@ -177,7 +180,7 @@ fn pseudo_legal_moves(bd: &Board, side: Color) -> Vec<Option<MovesResult>> {
         }
         let soldier = square.unwrap().0;
         match soldier {
-            Soldier::Pawn => move_sets.push(Some(pawn_moves(bd, pos, side))),
+            Soldier::Pawn => move_sets.push(Some(pawn_moves(bd, pos, side, enpassant_square))),
             Soldier::Knight => move_sets.push(Some(knight_moves(bd, pos))),
             Soldier::Bishop | Soldier::Rook | Soldier::Queen => {
                 move_sets.push(Some(sliding_moves(bd, pos, soldier, side)))
@@ -237,7 +240,12 @@ fn knight_moves(bd: &Board, (px, py): Position) -> MovesResult {
     MovesResult { captures, moves }
 }
 
-fn pawn_moves(bd: &Board, (px, py): Position, side: Color) -> MovesResult {
+fn pawn_moves(
+    bd: &Board,
+    (px, py): Position,
+    side: Color,
+    enpassant_square: Option<(usize, usize)>,
+) -> MovesResult {
     let mut captures = BitBoard::new_empty();
     let mut moves = BitBoard::new_empty();
     let dy = if side == Color::White { 1 } else { -1 };
@@ -254,9 +262,17 @@ fn pawn_moves(bd: &Board, (px, py): Position, side: Color) -> MovesResult {
     };
     for dx in [-1, 1].iter() {
         let (nx, ny) = (px + dx, py + dy);
-        if in_bounds((nx, ny)) && bd.is_enemy_color((px, py), (nx, ny)) {
-            captures.set(nx as usize, ny as usize);
-            moves.set(px as usize, (py + 2 * dy) as usize);
+        if in_bounds((nx, ny)) {
+            captures.set(nx as usize, ny as usize); // label diagonal as a capture so it is picked up as attacked
+            if bd.is_enemy_color((px, py), (nx, ny)) {
+                moves.set(nx as usize, ny as usize);
+            }
+        }
+        if let Some((ex, ey)) = enpassant_square {
+            if (nx, ny) == (ex as i32, ey as i32) {
+                moves.set(nx as usize, ny as usize);
+                captures.set((px + dx) as usize, py as usize);
+            }
         }
     }
     MovesResult { captures, moves }
