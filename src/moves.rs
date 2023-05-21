@@ -44,12 +44,19 @@ pub fn legal_moves(st: &State) -> Vec<Move> {
     let mut attacked_squares = BitBoard::new_empty();
     opp_moves.iter().enumerate().for_each(|(i, mvs)| {
         if let Some(mr) = mvs {
-            if mr.moves.get(kx, ky) {
+            let (px, py) = (i % 8, i / 8);
+            let (s, _) = opp_board.get(px, py).unwrap();
+            let attacks = if matches!(s, Soldier::Pawn) {
+                mr.captures
+            } else {
+                mr.moves
+            };
+            if attacks.get(kx, ky) {
                 num_checkers += 1;
                 checker_pos = Some((i % 8, i / 8));
             }
             // union captures to include pawn diagonal attacks
-            attacked_squares = attacked_squares.union(&mr.moves.union(&mr.captures));
+            attacked_squares = attacked_squares.union(&attacks);
         }
     });
 
@@ -99,12 +106,21 @@ pub fn legal_moves(st: &State) -> Vec<Move> {
         .filter_map(|(i, mr)| {
             if let Some(mr) = mr {
                 let pos = (i as i32 % 8, i as i32 / 8);
+                let (s, _) = st.board.get(pos.0 as usize, pos.1 as usize).unwrap();
                 if pos == (kx as i32, ky as i32) {
                     // we already found king moves
                     return Some(Move::from_bitboard(
                         (kx as i32, ky as i32),
                         king_moves.moves,
                     ));
+                }
+                let mut checker_mask = checker_mask;
+                if let Some((ex, ey)) = st.en_passant_square {
+                    if num_checkers > 0 && matches!(s, Soldier::Pawn) {
+                        // if we are in check from a pawn that we can
+                        // enpassant, allow the enpassant square as a legal move
+                        checker_mask.set(ex, ey);
+                    }
                 }
                 let legal_moves = mr
                     .moves
