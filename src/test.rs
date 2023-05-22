@@ -8,7 +8,10 @@ mod tests {
         state::State,
         vector::Vector,
     };
-    use std::fs;
+    use std::{
+        fs,
+        time::{Duration, Instant},
+    };
 
     #[derive(Deserialize)]
     struct JsonMove {
@@ -71,6 +74,8 @@ mod tests {
         let positions: Vec<PerftPosition> =
             serde_json::from_str(&fs::read_to_string("test-data/perft.json").unwrap()).unwrap();
 
+        let mut total = Duration::ZERO;
+        let mut num_states = 0;
         for position in positions {
             let st = State::from_fen(&position.fen);
             let depth = position.depth;
@@ -82,7 +87,11 @@ mod tests {
                     nodes += 1;
                     continue;
                 }
+                num_states += 1;
+                let start = Instant::now();
                 let moves = legal_moves(&st);
+                let elapsed = start.elapsed();
+                total += elapsed;
                 for mv in moves {
                     let next_st = State::step(st.clone(), mv);
                     queue.push((next_st, depth - 1));
@@ -91,5 +100,6 @@ mod tests {
 
             assert_eq!(nodes, position.nodes, "FEN: {}", position.fen);
         }
+        println!("Average legal_moves time: {:?}", total / num_states);
     }
 }

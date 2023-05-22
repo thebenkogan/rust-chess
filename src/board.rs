@@ -1,10 +1,8 @@
 use std::{fmt::Display, slice::Iter};
 
-use serde::Deserialize;
-
 use crate::vector::Vector;
 
-#[derive(Copy, Clone, Debug, PartialEq, Deserialize, Eq, PartialOrd, Ord)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Soldier {
     Pawn,
     Knight,
