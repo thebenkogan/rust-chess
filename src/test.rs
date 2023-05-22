@@ -1,16 +1,26 @@
 #[cfg(test)]
 mod tests {
+    use serde::Deserialize;
+
     use crate::{
+        board::Soldier,
         moves::{legal_moves, Move},
         state::State,
+        vector::Vector,
     };
-    use serde::Deserialize;
     use std::fs;
 
-    #[derive(Deserialize, Debug)]
+    #[derive(Deserialize)]
+    struct JsonMove {
+        from: (i8, i8),
+        to: (i8, i8),
+        promotion: Option<char>,
+    }
+
+    #[derive(Deserialize)]
     struct Position {
         fen: String,
-        moves: Vec<Move>,
+        moves: Vec<JsonMove>,
     }
 
     #[test]
@@ -18,12 +28,34 @@ mod tests {
         let positions: Vec<Position> =
             serde_json::from_str(&fs::read_to_string("test-data/positions.json").unwrap()).unwrap();
 
-        for mut position in positions {
+        for position in positions {
+            let mut expected_moves: Vec<Move> = position
+                .moves
+                .iter()
+                .map(
+                    |JsonMove {
+                         from: (fx, fy),
+                         to: (tx, ty),
+                         promotion,
+                     }| Move {
+                        from: Vector::from_int(*fx, *fy),
+                        to: Vector::from_int(*tx, *ty),
+                        promotion: match promotion {
+                            Some('q') => Some(Soldier::Queen),
+                            Some('r') => Some(Soldier::Rook),
+                            Some('b') => Some(Soldier::Bishop),
+                            Some('n') => Some(Soldier::Knight),
+                            _ => None,
+                        },
+                    },
+                )
+                .collect();
+
             let st = State::from_fen(&position.fen);
             let mut legal_moves = legal_moves(&st);
             legal_moves.sort();
-            position.moves.sort();
-            assert_eq!(legal_moves, position.moves, "FEN: {}", position.fen);
+            expected_moves.sort();
+            assert_eq!(legal_moves, expected_moves, "FEN: {}", position.fen);
         }
     }
 

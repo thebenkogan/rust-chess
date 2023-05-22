@@ -2,6 +2,8 @@ use std::{fmt::Display, slice::Iter};
 
 use serde::Deserialize;
 
+use crate::vector::Vector;
+
 #[derive(Copy, Clone, Debug, PartialEq, Deserialize, Eq, PartialOrd, Ord)]
 pub enum Soldier {
     Pawn,
@@ -42,46 +44,40 @@ impl Board {
         self.0.iter()
     }
 
-    pub fn get(&self, x: usize, y: usize) -> &Option<Piece> {
-        &self.0[x + y * 8]
+    pub fn get(&self, pos: Vector) -> &Option<Piece> {
+        &self.0[pos.as_num()]
     }
 
-    pub fn set(&mut self, x: usize, y: usize, piece: Option<Piece>) {
-        self.0[x + y * 8] = piece;
+    pub fn set(&mut self, pos: Vector, piece: Option<Piece>) {
+        self.0[pos.as_num()] = piece;
     }
 
-    pub fn remove(&mut self, x: usize, y: usize) -> Option<Piece> {
-        let piece = self.0[x + y * 8];
-        self.set(x, y, None);
+    pub fn remove(&mut self, pos: Vector) -> Option<Piece> {
+        let piece = self.0[pos.as_num()];
+        self.set(pos, None);
         piece
     }
 
-    pub fn is_same_color(&self, (x1, y1): (i32, i32), (x2, y2): (i32, i32)) -> bool {
-        match (
-            self.get(x1 as usize, y1 as usize),
-            self.get(x2 as usize, y2 as usize),
-        ) {
+    pub fn is_same_color(&self, p1: Vector, p2: Vector) -> bool {
+        match (self.get(p1), self.get(p2)) {
             (Some((_, c1)), Some((_, c2))) => c1 == c2,
             _ => false,
         }
     }
 
-    pub fn is_enemy_color(&self, (x1, y1): (i32, i32), (x2, y2): (i32, i32)) -> bool {
-        match (
-            self.get(x1 as usize, y1 as usize),
-            self.get(x2 as usize, y2 as usize),
-        ) {
+    pub fn is_enemy_color(&self, p1: Vector, p2: Vector) -> bool {
+        match (self.get(p1), self.get(p2)) {
             (Some((_, c1)), Some((_, c2))) => c1 != c2,
             _ => false,
         }
     }
 
-    pub fn remove_king(&mut self, color: Color) -> (usize, usize) {
+    pub fn remove_king(&mut self, color: Color) -> Vector {
         for i in 0..64 {
             if let Some((Soldier::King, c)) = self.0[i] {
                 if c == color {
                     self.0[i] = None;
-                    return (i % 8, i / 8);
+                    return Vector::from_num(i);
                 }
             }
         }
@@ -95,9 +91,8 @@ impl Board {
         )
     }
 
-    pub fn is_aligned((x1, y1): (usize, usize), (x2, y2): (usize, usize)) -> bool {
-        let (x1, y1, x2, y2) = (x1 as i32, y1 as i32, x2 as i32, y2 as i32);
-        x1 == x2 || y1 == y2 || (x1 - x2).abs() == (y1 - y2).abs()
+    pub fn is_aligned(p1: Vector, p2: Vector) -> bool {
+        p1.x == p2.x || p1.y == p2.y || (p1.x - p2.x).abs() == (p1.y - p2.y).abs()
     }
 }
 
@@ -110,7 +105,7 @@ impl Display for Board {
                 if col == 0 {
                     board.push_str("\n---------------------------------------------\n");
                 }
-                match self.get(col, row as usize) {
+                match self.get(Vector::from_int(col, row)) {
                     Some((Soldier::Pawn, Color::White)) => board.push_str(" ♟ "),
                     Some((Soldier::Knight, Color::White)) => board.push_str(" ♞ "),
                     Some((Soldier::Bishop, Color::White)) => board.push_str(" ♝ "),

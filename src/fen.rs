@@ -1,6 +1,7 @@
 use crate::{
     board::{Board, Color, Piece, Soldier},
     state::State,
+    vector::Vector,
 };
 
 impl State {
@@ -40,10 +41,10 @@ fn get_board(piece_field: &str) -> Board {
         }
 
         if c.is_ascii_digit() {
-            col += c.to_digit(10).unwrap() as usize;
+            col += c.to_digit(10).unwrap() as i8;
         } else {
             let piece = char_to_piece(c);
-            board.set(col, row, Some(piece));
+            board.set(Vector::from_int(col, row), Some(piece));
             col += 1;
         }
     }
@@ -101,13 +102,13 @@ fn castling_rights(s: &str) -> (bool, bool, bool, bool) {
     )
 }
 
-fn get_en_passant_square(s: &str) -> Option<(usize, usize)> {
+fn get_en_passant_square(s: &str) -> Option<Vector> {
     if s == "-" {
         None
     } else {
         let mut chars = s.chars();
-        let file = chars.next().unwrap() as usize - 97;
-        let rank = chars.next().unwrap().to_digit(10).unwrap() as usize - 1;
-        Some((file, rank))
+        let file = chars.next().unwrap() as i8 - 97;
+        let rank = chars.next().unwrap().to_digit(10).unwrap() as i8 - 1;
+        Some(Vector::from_int(file, rank))
     }
 }

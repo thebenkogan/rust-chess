@@ -1,6 +1,7 @@
 use crate::{
     board::{Board, Color, Soldier},
     moves::Move,
+    vector::Vector,
 };
 
 const STARTING_FEN: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
@@ -13,7 +14,7 @@ pub struct State {
     pub white_castle_queenside: bool,
     pub black_castle_kingside: bool,
     pub black_castle_queenside: bool,
-    pub en_passant_square: Option<(usize, usize)>,
+    pub en_passant_square: Option<Vector>,
 }
 
 impl State {
@@ -29,15 +30,12 @@ impl State {
     }
 
     pub fn step(mut st: Self, mv: Move) -> Self {
-        let (fx, fy) = mv.from;
-        let (tx, ty) = mv.to;
-
         // remove piece from old square and move to new one
-        let (mut s, c) = st.board.remove(fx as usize, fy as usize).unwrap();
+        let (mut s, c) = st.board.remove(mv.from).unwrap();
         if let Some(promotion_piece) = mv.promotion {
             s = promotion_piece;
         }
-        st.board.set(tx as usize, ty as usize, Some((s, c)));
+        st.board.set(mv.to, Some((s, c)));
 
         // update king moving castling rights and perform castling
         if s == Soldier::King {
@@ -48,46 +46,52 @@ impl State {
                 st.black_castle_kingside = false;
                 st.black_castle_queenside = false;
             }
-            match tx - fx {
+            match mv.to.x - mv.from.x {
                 2 => {
-                    st.board.remove(7, fy as usize);
-                    st.board.set(5, fy as usize, Some((Soldier::Rook, st.turn)));
+                    st.board.remove(Vector::from_int(7, mv.from.y));
+                    st.board.set(
+                        Vector::from_int(5, mv.from.y),
+                        Some((Soldier::Rook, st.turn)),
+                    );
                 }
                 -2 => {
-                    st.board.remove(0, fy as usize);
-                    st.board.set(3, fy as usize, Some((Soldier::Rook, st.turn)));
+                    st.board.remove(Vector::from_int(0, mv.from.y));
+                    st.board.set(
+                        Vector::from_int(3, mv.from.y),
+                        Some((Soldier::Rook, st.turn)),
+                    );
                 }
                 _ => {}
             }
         }
 
         // check for rooks moved/captured to update castling rights
-        if (fx, fy) == (7, 0) || (tx, ty) == (7, 0) {
+        if mv.from == Vector::from_int(7, 0) || mv.to == Vector::from_int(7, 0) {
             st.white_castle_kingside = false;
         }
-        if (fx, fy) == (0, 0) || (tx, ty) == (0, 0) {
+        if mv.from == Vector::from_int(0, 0) || mv.to == Vector::from_int(0, 0) {
             st.white_castle_queenside = false;
         }
-        if (fx, fy) == (7, 7) || (tx, ty) == (7, 7) {
+        if mv.from == Vector::from_int(7, 7) || mv.to == Vector::from_int(7, 7) {
             st.black_castle_kingside = false;
         }
-        if (fx, fy) == (0, 7) || (tx, ty) == (0, 7) {
+        if mv.from == Vector::from_int(0, 7) || mv.to == Vector::from_int(0, 7) {
             st.black_castle_queenside = false;
         }
 
         // check if we took enpassant and remove the captured pawn if so
-        if let Some((ex, ey)) = st.en_passant_square {
+        if let Some(ev) = st.en_passant_square {
             let dy = if st.turn == Color::White { -1 } else { 1 };
-            if s == Soldier::Pawn && (tx as usize, ty as usize) == (ex, ey) {
-                st.board.remove(ex, (ey as i32 + dy) as usize);
+            if s == Soldier::Pawn && mv.to == ev {
+                st.board.remove(Vector::from_int(ev.x, ev.y + dy));
             }
             st.en_passant_square = None;
         }
 
         // update enpassant square if pawn moved 2 squares
-        if s == Soldier::Pawn && (fy - ty).abs() == 2 {
+        if s == Soldier::Pawn && (mv.from.y - mv.to.y).abs() == 2 {
             let dy = if st.turn == Color::White { -1 } else { 1 };
-            st.en_passant_square = Some((fx as usize, (ty + dy) as usize));
+            st.en_passant_square = Some(Vector::from_int(mv.from.x, mv.to.y + dy));
         }
 
         // their turn now!
