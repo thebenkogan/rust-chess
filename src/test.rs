@@ -38,8 +38,8 @@ mod tests {
                          to: (tx, ty),
                          promotion,
                      }| Move {
-                        from: Vector::from_int(*fx, *fy),
-                        to: Vector::from_int(*tx, *ty),
+                        from: Vector::new(*fx, *fy),
+                        to: Vector::new(*tx, *ty),
                         promotion: match promotion {
                             Some('q') => Some(Soldier::Queen),
                             Some('r') => Some(Soldier::Rook),

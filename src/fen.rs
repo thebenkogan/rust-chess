@@ -44,7 +44,7 @@ fn get_board(piece_field: &str) -> Board {
             col += c.to_digit(10).unwrap() as i8;
         } else {
             let piece = char_to_piece(c);
-            board.set(Vector::from_int(col, row), Some(piece));
+            board.set(Vector::new(col, row), Some(piece));
             col += 1;
         }
     }
@@ -109,6 +109,6 @@ fn get_en_passant_square(s: &str) -> Option<Vector> {
         let mut chars = s.chars();
         let file = chars.next().unwrap() as i8 - 97;
         let rank = chars.next().unwrap().to_digit(10).unwrap() as i8 - 1;
-        Some(Vector::from_int(file, rank))
+        Some(Vector::new(file, rank))
     }
 }

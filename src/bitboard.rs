@@ -36,7 +36,7 @@ impl BitBoard {
     pub fn make_line(p1: Vector, p2: Vector) -> BitBoard {
         let mut line = BitBoard::new_empty();
         line.set(p1);
-        let dir = Vector::from_int((p2.x - p1.x).signum(), (p2.y - p1.y).signum());
+        let dir = Vector::new((p2.x - p1.x).signum(), (p2.y - p1.y).signum());
         let mut curr = p1 + dir;
         while curr != p2 {
             line.set(curr);

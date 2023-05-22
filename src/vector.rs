@@ -7,14 +7,7 @@ pub struct Vector {
 }
 
 impl Vector {
-    pub fn from_usize(x: usize, y: usize) -> Self {
-        Self {
-            x: x as i8,
-            y: y as i8,
-        }
-    }
-
-    pub fn from_int(x: i8, y: i8) -> Self {
+    pub fn new(x: i8, y: i8) -> Self {
         Self { x, y }
     }
 
@@ -39,45 +32,45 @@ impl Vector {
 
     pub fn knight_dirs() -> Vec<Self> {
         vec![
-            Self::from_int(1, 2),
-            Self::from_int(2, 1),
-            Self::from_int(2, -1),
-            Self::from_int(1, -2),
-            Self::from_int(-1, -2),
-            Self::from_int(-2, -1),
-            Self::from_int(-2, 1),
-            Self::from_int(-1, 2),
+            Self::new(1, 2),
+            Self::new(2, 1),
+            Self::new(2, -1),
+            Self::new(1, -2),
+            Self::new(-1, -2),
+            Self::new(-2, -1),
+            Self::new(-2, 1),
+            Self::new(-1, 2),
         ]
     }
 
     pub fn rook_dirs() -> Vec<Self> {
         vec![
-            Self::from_int(1, 0),
-            Self::from_int(0, 1),
-            Self::from_int(-1, 0),
-            Self::from_int(0, -1),
+            Self::new(1, 0),
+            Self::new(0, 1),
+            Self::new(-1, 0),
+            Self::new(0, -1),
         ]
     }
 
     pub fn bishop_dirs() -> Vec<Self> {
         vec![
-            Self::from_int(1, 1),
-            Self::from_int(-1, 1),
-            Self::from_int(-1, -1),
-            Self::from_int(1, -1),
+            Self::new(1, 1),
+            Self::new(-1, 1),
+            Self::new(-1, -1),
+            Self::new(1, -1),
         ]
     }
 
     pub fn queen_dirs() -> Vec<Self> {
         vec![
-            Self::from_int(1, 0),
-            Self::from_int(1, 1),
-            Self::from_int(0, 1),
-            Self::from_int(-1, 1),
-            Self::from_int(-1, 0),
-            Self::from_int(-1, -1),
-            Self::from_int(0, -1),
-            Self::from_int(1, -1),
+            Self::new(1, 0),
+            Self::new(1, 1),
+            Self::new(0, 1),
+            Self::new(-1, 1),
+            Self::new(-1, 0),
+            Self::new(-1, -1),
+            Self::new(0, -1),
+            Self::new(1, -1),
         ]
     }
 

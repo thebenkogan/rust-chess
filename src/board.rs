@@ -105,7 +105,7 @@ impl Display for Board {
                 if col == 0 {
                     board.push_str("\n---------------------------------------------\n");
                 }
-                match self.get(Vector::from_int(col, row)) {
+                match self.get(Vector::new(col, row)) {
                     Some((Soldier::Pawn, Color::White)) => board.push_str(" ♟ "),
                     Some((Soldier::Knight, Color::White)) => board.push_str(" ♞ "),
                     Some((Soldier::Bishop, Color::White)) => board.push_str(" ♝ "),

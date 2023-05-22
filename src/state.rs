@@ -48,34 +48,30 @@ impl State {
             }
             match mv.to.x - mv.from.x {
                 2 => {
-                    st.board.remove(Vector::from_int(7, mv.from.y));
-                    st.board.set(
-                        Vector::from_int(5, mv.from.y),
-                        Some((Soldier::Rook, st.turn)),
-                    );
+                    st.board.remove(Vector::new(7, mv.from.y));
+                    st.board
+                        .set(Vector::new(5, mv.from.y), Some((Soldier::Rook, st.turn)));
                 }
                 -2 => {
-                    st.board.remove(Vector::from_int(0, mv.from.y));
-                    st.board.set(
-                        Vector::from_int(3, mv.from.y),
-                        Some((Soldier::Rook, st.turn)),
-                    );
+                    st.board.remove(Vector::new(0, mv.from.y));
+                    st.board
+                        .set(Vector::new(3, mv.from.y), Some((Soldier::Rook, st.turn)));
                 }
                 _ => {}
             }
         }
 
         // check for rooks moved/captured to update castling rights
-        if mv.from == Vector::from_int(7, 0) || mv.to == Vector::from_int(7, 0) {
+        if mv.from == Vector::new(7, 0) || mv.to == Vector::new(7, 0) {
             st.white_castle_kingside = false;
         }
-        if mv.from == Vector::from_int(0, 0) || mv.to == Vector::from_int(0, 0) {
+        if mv.from == Vector::new(0, 0) || mv.to == Vector::new(0, 0) {
             st.white_castle_queenside = false;
         }
-        if mv.from == Vector::from_int(7, 7) || mv.to == Vector::from_int(7, 7) {
+        if mv.from == Vector::new(7, 7) || mv.to == Vector::new(7, 7) {
             st.black_castle_kingside = false;
         }
-        if mv.from == Vector::from_int(0, 7) || mv.to == Vector::from_int(0, 7) {
+        if mv.from == Vector::new(0, 7) || mv.to == Vector::new(0, 7) {
             st.black_castle_queenside = false;
         }
 
@@ -83,7 +79,7 @@ impl State {
         if let Some(ev) = st.en_passant_square {
             let dy = if st.turn == Color::White { -1 } else { 1 };
             if s == Soldier::Pawn && mv.to == ev {
-                st.board.remove(Vector::from_int(ev.x, ev.y + dy));
+                st.board.remove(Vector::new(ev.x, ev.y + dy));
             }
             st.en_passant_square = None;
         }
@@ -91,7 +87,7 @@ impl State {
         // update enpassant square if pawn moved 2 squares
         if s == Soldier::Pawn && (mv.from.y - mv.to.y).abs() == 2 {
             let dy = if st.turn == Color::White { -1 } else { 1 };
-            st.en_passant_square = Some(Vector::from_int(mv.from.x, mv.to.y + dy));
+            st.en_passant_square = Some(Vector::new(mv.from.x, mv.to.y + dy));
         }
 
         // their turn now!

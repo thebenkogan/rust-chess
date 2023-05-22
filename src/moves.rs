@@ -194,7 +194,7 @@ fn is_enpassant_pin_rank(bd: &Board, side: Color, rank: i8) -> bool {
     let mut soldiers = Vec::new();
     let mut king_file = None;
     for file in 0..=7 {
-        if let Some(p) = bd.get(Vector::from_int(file, rank)) {
+        if let Some(p) = bd.get(Vector::new(file, rank)) {
             match p {
                 (Soldier::Rook, c) | (Soldier::Queen, c) => {
                     if *c != side {
@@ -320,7 +320,7 @@ fn pawn_moves(
 ) -> MovesResult {
     let mut attacks = BitBoard::new_empty();
     let mut moves = BitBoard::new_empty();
-    let push_dir = Vector::from_int(0, if side == Color::White { 1 } else { -1 });
+    let push_dir = Vector::new(0, if side == Color::White { 1 } else { -1 });
     let is_start = if side == Color::White {
         pos.y == 1
     } else {
@@ -333,7 +333,7 @@ fn pawn_moves(
         }
     };
     for dx in [-1, 1].iter() {
-        let dir = Vector::from_int(*dx, push_dir.y);
+        let dir = Vector::new(*dx, push_dir.y);
         let offset = pos + dir;
         if offset.in_bounds() {
             attacks.set(offset); // label diagonal as a capture so it is picked up as attacked
@@ -344,7 +344,7 @@ fn pawn_moves(
         if let Some(ev) = enpassant_square {
             if offset == ev {
                 moves.set(offset);
-                attacks.set(Vector::from_int(pos.x + dx, pos.y));
+                attacks.set(Vector::new(pos.x + dx, pos.y));
             }
         }
     }
@@ -373,21 +373,21 @@ fn king_moves(
 
     if !king_in_check {
         if kingside_rights
-            && bd.get(Vector::from_int(pos.x + 1, pos.y)).is_none()
-            && bd.get(Vector::from_int(pos.x + 2, pos.y)).is_none()
-            && !attacked.get(Vector::from_int(pos.x + 1, pos.y))
-            && !attacked.get(Vector::from_int(pos.x + 2, pos.y))
+            && bd.get(Vector::new(pos.x + 1, pos.y)).is_none()
+            && bd.get(Vector::new(pos.x + 2, pos.y)).is_none()
+            && !attacked.get(Vector::new(pos.x + 1, pos.y))
+            && !attacked.get(Vector::new(pos.x + 2, pos.y))
         {
-            moves.set(Vector::from_int(pos.x + 2, pos.y));
+            moves.set(Vector::new(pos.x + 2, pos.y));
         }
         if queenside_rights
-            && bd.get(Vector::from_int(pos.x - 1, pos.y)).is_none()
-            && bd.get(Vector::from_int(pos.x - 2, pos.y)).is_none()
-            && bd.get(Vector::from_int(pos.x - 3, pos.y)).is_none()
-            && !attacked.get(Vector::from_int(pos.x - 1, pos.y))
-            && !attacked.get(Vector::from_int(pos.x - 2, pos.y))
+            && bd.get(Vector::new(pos.x - 1, pos.y)).is_none()
+            && bd.get(Vector::new(pos.x - 2, pos.y)).is_none()
+            && bd.get(Vector::new(pos.x - 3, pos.y)).is_none()
+            && !attacked.get(Vector::new(pos.x - 1, pos.y))
+            && !attacked.get(Vector::new(pos.x - 2, pos.y))
         {
-            moves.set(Vector::from_int(pos.x - 2, pos.y));
+            moves.set(Vector::new(pos.x - 2, pos.y));
         }
     }
 
