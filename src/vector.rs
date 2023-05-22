@@ -33,6 +33,10 @@ impl Vector {
         self.x >= 0 && self.x < 8 && self.y >= 0 && self.y < 8
     }
 
+    pub fn board_pos_iter() -> impl Iterator<Item = Self> {
+        (0..64).map(Self::from_num)
+    }
+
     pub fn knight_dirs() -> Vec<Self> {
         vec![
             Self::from_int(1, 2),
@@ -78,16 +82,7 @@ impl Vector {
     }
 
     pub fn king_dirs() -> Vec<Self> {
-        vec![
-            Self::from_int(1, 0),
-            Self::from_int(1, 1),
-            Self::from_int(0, 1),
-            Self::from_int(-1, 1),
-            Self::from_int(-1, 0),
-            Self::from_int(-1, -1),
-            Self::from_int(0, -1),
-            Self::from_int(1, -1),
-        ]
+        Self::queen_dirs()
     }
 }
 

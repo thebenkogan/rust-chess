@@ -17,19 +17,16 @@ pub struct Move {
 impl Move {
     fn from_bitboard(s: Soldier, from: Vector, to: BitBoard) -> Vec<Self> {
         let mut moves = Vec::new();
-        for x in 0..8 {
-            for y in 0..8 {
-                let pos = Vector::from_usize(x, y);
-                if to.get(pos) {
-                    if matches!(s, Soldier::Pawn) && (y == 0 || y == 7) {
-                        moves.append(&mut Self::promotion_moves(from, pos));
-                    } else {
-                        moves.push(Self {
-                            from,
-                            to: Vector::from_usize(x, y),
-                            promotion: None,
-                        });
-                    }
+        for pos in Vector::board_pos_iter() {
+            if to.get(pos) {
+                if matches!(s, Soldier::Pawn) && (pos.y == 0 || pos.y == 7) {
+                    moves.append(&mut Self::promotion_moves(from, pos));
+                } else {
+                    moves.push(Self {
+                        from,
+                        to: pos,
+                        promotion: None,
+                    });
                 }
             }
         }

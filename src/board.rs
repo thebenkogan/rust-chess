@@ -73,11 +73,11 @@ impl Board {
     }
 
     pub fn remove_king(&mut self, color: Color) -> Vector {
-        for i in 0..64 {
-            if let Some((Soldier::King, c)) = self.0[i] {
-                if c == color {
-                    self.0[i] = None;
-                    return Vector::from_num(i);
+        for v in Vector::board_pos_iter() {
+            if let Some((Soldier::King, c)) = self.get(v) {
+                if *c == color {
+                    self.set(v, None);
+                    return v;
                 }
             }
         }
