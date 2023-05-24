@@ -7,7 +7,7 @@ use crate::{
     vector::Vector,
 };
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Move {
     pub from: Vector,
     pub to: Vector,

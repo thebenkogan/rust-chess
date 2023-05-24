@@ -8,10 +8,7 @@ mod tests {
         state::State,
         vector::Vector,
     };
-    use std::{
-        fs,
-        time::{Duration, Instant},
-    };
+    use std::fs;
 
     #[derive(Deserialize)]
     struct JsonMove {
@@ -69,37 +66,28 @@ mod tests {
         fen: String,
     }
 
+    fn count_nodes(st: &mut State, depth: usize) -> usize {
+        if depth == 0 {
+            return 1;
+        }
+        let mut num_nodes = 0;
+        for mv in legal_moves(st) {
+            st.push(mv);
+            num_nodes += count_nodes(st, depth - 1);
+            st.pop();
+        }
+        num_nodes
+    }
+
     #[test]
     fn perft_tests() {
         let positions: Vec<PerftPosition> =
             serde_json::from_str(&fs::read_to_string("test-data/perft.json").unwrap()).unwrap();
 
-        let mut total = Duration::ZERO;
-        let mut num_states = 0;
         for position in positions {
-            let st = State::from_fen(&position.fen);
-            let depth = position.depth;
-            let mut nodes = 0;
-            let mut queue = vec![(st, depth)];
-            while !queue.is_empty() {
-                let (st, depth) = queue.pop().unwrap();
-                if depth == 0 {
-                    nodes += 1;
-                    continue;
-                }
-                num_states += 1;
-                let start = Instant::now();
-                let moves = legal_moves(&st);
-                let elapsed = start.elapsed();
-                total += elapsed;
-                for mv in moves {
-                    let next_st = State::step(st.clone(), mv);
-                    queue.push((next_st, depth - 1));
-                }
-            }
-
-            assert_eq!(nodes, position.nodes, "FEN: {}", position.fen);
+            let mut st = State::from_fen(&position.fen);
+            let num_nodes = count_nodes(&mut st, position.depth);
+            assert_eq!(num_nodes, position.nodes, "FEN: {}", position.fen);
         }
-        println!("Average legal_moves time: {:?}", total / num_states);
     }
 }

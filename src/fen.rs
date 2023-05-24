@@ -25,6 +25,7 @@ impl State {
             black_castle_kingside,
             black_castle_queenside,
             en_passant_square,
+            reversions: Vec::new(),
         }
     }
 }

@@ -37,7 +37,6 @@ impl Board {
         Board([None; 64])
     }
 
-    // write a function 'iter' that gives back an iterator over references of the board pieces
     pub fn iter(&self) -> Iter<Option<Piece>> {
         self.0.iter()
     }
@@ -46,8 +45,10 @@ impl Board {
         &self.0[pos.as_num()]
     }
 
-    pub fn set(&mut self, pos: Vector, piece: Option<Piece>) {
+    pub fn set(&mut self, pos: Vector, piece: Option<Piece>) -> Option<Piece> {
+        let prev = self.0[pos.as_num()];
         self.0[pos.as_num()] = piece;
+        prev
     }
 
     pub fn remove(&mut self, pos: Vector) -> Option<Piece> {
